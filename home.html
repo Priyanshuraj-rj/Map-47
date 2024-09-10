@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .info-box {
+            position: absolute;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .info-box p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="infoBox" class="info-box" style="display: none;"></div>
+
+    <script>
+        function initMap() {
+            // Get user's location from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const userLat = parseFloat(urlParams.get('lat'));
+            const userLon = parseFloat(urlParams.get('lon'));
+
+            // Create the map
+            const map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: { lat: userLat, lng: userLon }
+            });
+
+            // Add user's marker
+            const userMarker = new google.maps.Marker({
+                position: { lat: userLat, lng: userLon },
+                map: map,
+                title: 'Your Location'
+            });
+
+            // Add some example locations
+            const exampleLocations = [
+                { lat: userLat + 0.01, lng: userLon + 0.01, name: 'Place 1' },
+                { lat: userLat - 0.01, lng: userLon - 0.01, name: 'Place 2' },
+                { lat: userLat + 0.02, lng: userLon - 0.02, name: 'Place 3' }
+            ];
+
+            // Add markers for example locations
+            exampleLocations.forEach(location => {
+                const marker = new google.maps.Marker({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: map,
+                    title: location.name
+                });
+
+                marker.addListener('click', function() {
+                    const distance = calculateDistance(userLat, userLon, location.lat, location.lng);
+                    const infoBox = document.getElementById('infoBox');
+                    infoBox.style.display = 'block';
+                    infoBox.style.left = `${event.clientX}px`;
+                    infoBox.style.top = `${event.clientY}px`;
+                    infoBox.innerHTML = `
+                        <p><strong>${location.name}</strong></p>
+                        <p>Address: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}</p>
+                        <p>Distance: ${distance.toFixed(2)} km</p>
+                    `;
+                });
+            });
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in km
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function toRad(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+
+        // Load Google Maps API
+        function loadScript() {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap`;
+            script.async = true;
+            document.head.appendChild(script);
+        }
+
+        loadScript();
+    </script>
+</body>
+</html>
